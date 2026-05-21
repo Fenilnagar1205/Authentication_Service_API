@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const { registerUser, loginUser } = require('../controllers/authController');
+const { registerUser, loginUser, updateProfile } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
 const validate = require('../middleware/validate');
-const { registerValidators, loginValidators } = require('../middleware/authValidators');
+const { registerValidators, loginValidators, updateProfileValidators} = require('../middleware/authValidators');
 
 
 router.post('/register',registerValidators, validate, registerUser);
@@ -16,5 +16,7 @@ router.get('/profile', protect, (req, res) => {
     user: req.user,
   });
 });
+
+router.put('/profile', protect, updateProfileValidators, validate, updateProfile);
 
 module.exports = router;

@@ -24,4 +24,16 @@ const loginValidators = [
     .withMessage('Password is required'),
 ];
 
-module.exports = { registerValidators, loginValidators };
+const updateProfileValidators = [
+  body('name')
+    .optional()
+    .notEmpty()
+    .withMessage('Name cannot be empty'),
+
+  body('email')
+    .optional()
+    .isEmail()
+    .withMessage('Please enter a valid email'),
+];
+
+module.exports = { registerValidators, loginValidators, updateProfileValidators};
