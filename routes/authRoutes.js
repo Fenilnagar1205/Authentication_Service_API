@@ -2,9 +2,12 @@ const express = require('express');
 const router = express.Router();
 const { registerUser, loginUser } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
+const validate = require('../middleware/validate');
+const { registerValidators, loginValidators } = require('../middleware/authValidators');
 
-router.post('/register', registerUser);
-router.post('/login', loginUser);
+
+router.post('/register',registerValidators, validate, registerUser);
+router.post('/login',loginValidators, validate, loginUser);
 
 // Protected route — only logged in users can access
 router.get('/profile', protect, (req, res) => {
