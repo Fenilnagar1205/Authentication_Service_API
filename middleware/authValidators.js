@@ -36,4 +36,10 @@ const updateProfileValidators = [
     .withMessage('Please enter a valid email'),
 ];
 
-module.exports = { registerValidators, loginValidators, updateProfileValidators};
+const forgotPasswordValidators = [
+  body('email')
+    .isEmail()
+    .withMessage('Please enter a valid email'),
+];
+
+module.exports = { registerValidators, loginValidators, updateProfileValidators, forgotPasswordValidators};

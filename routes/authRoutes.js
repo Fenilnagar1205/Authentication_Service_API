@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const { registerUser, loginUser, updateProfile, deleteAccount } = require('../controllers/authController');
+const { registerUser, loginUser, updateProfile, deleteAccount, forgotPassword } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
 const validate = require('../middleware/validate');
-const { registerValidators, loginValidators, updateProfileValidators} = require('../middleware/authValidators');
+const { registerValidators, loginValidators, updateProfileValidators, forgotPasswordValidators} = require('../middleware/authValidators');
 const { loginLimiter, registerLimiter} = require('../middleware/rateLimiter')
 
 
@@ -20,5 +20,7 @@ router.get('/profile', protect, (req, res) => {
 
 router.put('/profile', protect, updateProfileValidators, validate, updateProfile);
 router.delete('/profile', protect, deleteAccount);
+
+router.post('/forgotpassword', forgotPasswordValidators, validate, forgotPassword);
 
 module.exports = router;

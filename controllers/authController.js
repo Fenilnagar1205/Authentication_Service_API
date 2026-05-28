@@ -1,6 +1,8 @@
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+const sendEmail = require('../utils/sendEmail');
 
 //Generate JWT Token
 const generateToken = (id)=>{
@@ -115,4 +117,46 @@ const deleteAccount = async (req, res) => {
   }
 };
 
-module.exports = { registerUser, loginUser, updateProfile, deleteAccount };
+//Forget password
+
+const forgotPassword = async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.json({ message: 'If that email exists, a reset link has been sent' });
+    }
+
+    // Generate raw token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+
+    // Hash the token before saving to DB
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(resetToken)
+      .digest('hex');
+
+    // Save hashed token and expiry to user
+    user.resetPasswordToken = hashedToken;
+    user.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
+    await user.save();
+
+    // Create reset URL with raw token
+    const resetUrl = `http://localhost:5000/api/auth/resetpassword/${resetToken}`;
+
+    // Send email
+    await sendEmail(
+      user.email,
+      'Password Reset Request',
+      `You requested a password reset. Click this link to reset your password:\n\n${resetUrl}\n\nThis link expires in 10 minutes.\n\nIf you did not request this, ignore this email.`
+    );
+
+    res.json({ message: 'If that email exists, a reset link has been sent' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports = { registerUser, loginUser, updateProfile, deleteAccount, forgotPassword };
