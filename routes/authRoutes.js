@@ -4,10 +4,11 @@ const { registerUser, loginUser, updateProfile, deleteAccount } = require('../co
 const { protect } = require('../middleware/authMiddleware');
 const validate = require('../middleware/validate');
 const { registerValidators, loginValidators, updateProfileValidators} = require('../middleware/authValidators');
+const { loginLimiter, registerLimiter} = require('../middleware/rateLimiter')
 
 
-router.post('/register',registerValidators, validate, registerUser);
-router.post('/login',loginValidators, validate, loginUser);
+router.post('/register',registerLimiter, registerValidators, validate, registerUser);
+router.post('/login',loginLimiter, loginValidators, validate, loginUser);
 
 // Protected route — only logged in users can access
 router.get('/profile', protect, (req, res) => {
