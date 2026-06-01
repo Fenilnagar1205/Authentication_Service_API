@@ -159,4 +159,39 @@ const forgotPassword = async (req, res) => {
   }
 };
 
-module.exports = { registerUser, loginUser, updateProfile, deleteAccount, forgotPassword };
+// Reset Password
+const resetPassword = async (req, res) => {
+  try {
+    // Get raw token from URL and hash it
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(req.params.resetToken)
+      .digest('hex');
+
+    // Find user with matching token that hasn't expired
+    const user = await User.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpire: { $gt: Date.now() }, 
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid or expired reset token' });
+    }
+
+    // Hash the new password
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(req.body.password, salt);
+
+    // Clear reset token fields
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+
+    await user.save();
+
+    res.json({ message: 'Password reset successful' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports = { registerUser, loginUser, updateProfile, deleteAccount, forgotPassword, resetPassword };

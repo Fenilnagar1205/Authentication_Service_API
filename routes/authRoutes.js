@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const { registerUser, loginUser, updateProfile, deleteAccount, forgotPassword } = require('../controllers/authController');
+const { registerUser, loginUser, updateProfile, deleteAccount, forgotPassword, resetPassword } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
 const validate = require('../middleware/validate');
-const { registerValidators, loginValidators, updateProfileValidators, forgotPasswordValidators} = require('../middleware/authValidators');
+const { registerValidators, loginValidators, updateProfileValidators, forgotPasswordValidators, resetPasswordValidators} = require('../middleware/authValidators');
 const { loginLimiter, registerLimiter} = require('../middleware/rateLimiter')
 
 
@@ -22,5 +22,6 @@ router.put('/profile', protect, updateProfileValidators, validate, updateProfile
 router.delete('/profile', protect, deleteAccount);
 
 router.post('/forgotpassword', forgotPasswordValidators, validate, forgotPassword);
+router.put('/resetpassword/:resetToken', resetPasswordValidators, validate, resetPassword);
 
 module.exports = router;

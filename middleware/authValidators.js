@@ -42,4 +42,10 @@ const forgotPasswordValidators = [
     .withMessage('Please enter a valid email'),
 ];
 
-module.exports = { registerValidators, loginValidators, updateProfileValidators, forgotPasswordValidators};
+const resetPasswordValidators = [
+  body('password')
+    .isLength({ min: 6 })
+    .withMessage('Password must be at least 6 characters'),
+];
+
+module.exports = { registerValidators, loginValidators, updateProfileValidators, forgotPasswordValidators, resetPasswordValidators};
