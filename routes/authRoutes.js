@@ -1,14 +1,20 @@
 const express = require('express');
 const router = express.Router();
-const { registerUser, loginUser, updateProfile, deleteAccount, forgotPassword, resetPassword, refreshToken, logout } = require('../controllers/authController');
+const { registerUser, loginUser, updateProfile, deleteAccount, forgotPassword, resetPassword, refreshToken, logout, getAllUsers, deleteUser } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
 const validate = require('../middleware/validate');
+const authorizeRoles = require('../middleware/roleMiddleware');
 const { registerValidators, loginValidators, updateProfileValidators, forgotPasswordValidators, resetPasswordValidators} = require('../middleware/authValidators');
 const { loginLimiter, registerLimiter} = require('../middleware/rateLimiter')
 
 
 router.post('/register',registerLimiter, registerValidators, validate, registerUser);
 router.post('/login',loginLimiter, loginValidators, validate, loginUser);
+
+// Admin only routes
+router.get('/admin/users', protect, authorizeRoles('admin'), getAllUsers);
+router.delete('/admin/users/:id', protect, authorizeRoles('admin'), deleteUser);
+
 
 // Protected route — only logged in users can access
 router.get('/profile', protect, (req, res) => {
