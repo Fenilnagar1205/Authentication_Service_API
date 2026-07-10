@@ -1,12 +1,14 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
+const cookieParser = require('cookie-parser');
 
 dotenv.config();
+const app = express();
 connectDB();
 
-const app = express();
 app.use(express.json()); 
+app.use(cookieParser());
 
 // Routes
 app.use('/api/auth', require('./routes/authRoutes'));

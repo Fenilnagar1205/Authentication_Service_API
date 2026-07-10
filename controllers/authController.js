@@ -4,10 +4,14 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const sendEmail = require('../utils/sendEmail');
 
-//Generate JWT Token
-const generateToken = (id)=>{
+//Generate JWT ACCESS Token
+const generateAccessToken = (id)=>{
     return jwt.sign({id},process.env.JWT_SECRET, {expiresIn:'7d'});
 }
+//Generate JWT REFRESH Token
+const generateRefreshToken = (id) => {
+  return jwt.sign({ id }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '7d' });
+};
 
 //Register User
 
@@ -35,7 +39,7 @@ const registerUser = async(req, res) =>{
       _id: user._id,
       name: user.name,
       email: user.email,
-      token: generateToken(user._id),
+      token: generateAccessToken(user._id),
     });
     }
 
@@ -61,11 +65,25 @@ const loginUser = async (req, res) => {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
+    const accessToken = generateAccessToken(user._id);
+    const refreshToken = generateRefreshToken(user._id);
+
+    // Save refresh token to DB
+    user.refreshToken = refreshToken;
+    await user.save();
+
+    // Send refresh token as httpOnly cookie
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: false,
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
+    });
+
     res.json({
       _id: user._id,
       name: user.name,
       email: user.email,
-      token: generateToken(user._id),
+      accessToken,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -192,6 +210,55 @@ const resetPassword = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
-};
+}
+  // Refreshtoken
 
-module.exports = { registerUser, loginUser, updateProfile, deleteAccount, forgotPassword, resetPassword };
+const refreshToken = async (req, res) => {
+  try {
+    // Get refresh token from cookie
+    const token = req.cookies.refreshToken;
+
+    if (!token) {
+      return res.status(401).json({ message: 'No refresh token found' });
+    }
+
+    // Verify the refresh token
+    const decoded = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
+
+    // Find user and check if refresh token matches DB
+    const user = await User.findById(decoded.id);
+    if (!user || user.refreshToken !== token) {
+      return res.status(401).json({ message: 'Invalid refresh token' });
+    }
+
+    // Generate new access token
+    const newAccessToken = generateAccessToken(user._id);
+
+    res.json({ accessToken: newAccessToken });
+  } catch (error) {
+    res.status(401).json({ message: 'Invalid or expired refresh token' });
+  }
+}
+//logout
+
+const logout = async (req, res) => {
+  try {
+    const token = req.cookies.refreshToken;
+
+    if (token) {
+      // Find user and clear their refresh token in DB
+      const user = await User.findOne({ refreshToken: token });
+      if (user) {
+        user.refreshToken = null;
+        await user.save();
+      }
+    }
+
+    // Clear the cookie
+    res.clearCookie('refreshToken');
+    res.json({ message: 'Logged out successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+module.exports = { registerUser, loginUser, updateProfile, deleteAccount, forgotPassword, resetPassword, refreshToken, logout };
